@@ -1,0 +1,31 @@
+.program blink
+.side_set 4 opt
+
+; sideset bits: CS, DC, WR, RD
+
+    NOP                                         SIDE 0b1000     ; idle mode
+.wrap_target
+START:
+    PULL    BLOCK                                               ; first packet is the arg count
+    OUT     X,          16                                      ; set scratch register X to arg count                   
+    
+    PULL    BLOCK                                               ; next packet is the command
+    NOP                                         SIDE 0b0001     ; enter command mode (WR low)
+    OUT     PINS,       16                                      ; output command
+    NOP                                         SIDE 0b0011     ; write command (WR high)
+
+    JMP     !X,         DONE                                    ; if X is 0 (no arguments), skip over argument handling
+    JMP     X--,        ARG_WRITE_LOOP                          ; if there are arguments, dec X by 1 and proceed to loop
+ARG_WRITE_LOOP:
+    PULL    BLOCK                                               ; all remaining packets are arguments
+
+    NOP                                         SIDE 0b0101     ; enter write mode (WR low)
+    OUT     PINS,       16                                      ; output argument
+    NOP                                                         ; timing
+    NOP                                         SIDE 0b0111     ; write argument (WR high)
+    
+    JMP     X--,        ARG_WRITE_LOOP                          ; while arguments remain, jump back through
+DONE:
+    NOP                                         SIDE 0b1000     ; idle mode
+    IRQ     WAIT        0                                       ; done reading arguments, time for next command
+.wrap
