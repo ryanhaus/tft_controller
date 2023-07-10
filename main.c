@@ -33,22 +33,34 @@ int main() {
 
     tft_startup_sequence(pio, sm);
 
+    int sq_x = 0, sq_y = 0;
+    int t = 0;
+
+    gpio_init(TFT_TE);
+    gpio_set_dir(TFT_TE, GPIO_IN);
+
     while (true) {
-        for (int i = 0; i < 240; i++) {
-            uint32_t extra_noise = rand();
+        sq_x = (int)(sin(t / 20.0) * 50);
+        sq_y = (int)(cos(t / 20.0) * 50);
+        t++;
 
-            for (int j = 0; j < 10; j++) {
-                uint32_t noise = rand();
-
-                for (int k = 0; k < 31; k++)
-                    screen_data[i][32 * j + k] = noise & (1 << k) ? 0xFFFF : 0x0000;
-
-                screen_data[i][32 * j + 31] = extra_noise & (1 << j) ? 0xFFFF : 0x0000;
+        for (int y = 0; y < 240; y++)
+            for (int x = 0; x < 320; x++) {
+                screen_data[y][x] = 
+                    (   y >= 100 + sq_y
+                    &&  y <= 140 + sq_y
+                    &&  x >= 140 + sq_x
+                    &&  x <= 180 + sq_x)
+                        ? 0b1111100000000000
+                        : 0xFFFF;
             }
-        }
+
+        while (gpio_get(TFT_TE))
+            asm("NOP");
+
+        while(!gpio_get(TFT_TE))
+            asm("NOP");
 
         draw_full_screen(pio, sm, &screen_data[0][0]);
-
-        sleep_ms(15);
     }
 }
