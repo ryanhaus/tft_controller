@@ -39,7 +39,7 @@ void pio_test_init(PIO pio, uint sm, uint offset, uint pin_d0, uint rd_pin) {
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
 
     // clock div, 66ns required per write cycle
-    sm_config_set_clkdiv(&c, 1.5f);
+    sm_config_set_clkdiv(&c, 1.375f);
 
     // enable IRQ0
     pio_set_irq0_source_enabled(pio, pis_interrupt0, true);
